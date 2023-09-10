@@ -94,7 +94,7 @@ int main(int argc, char **argv){
  * - char** token_arr: double ptr to array where elements point to strings
  *
  * Return:
- * - modifies tokens
+ * - modifies token_arr
  */
 void read_input(char *line_arr, char **token_arr){
 
