@@ -28,7 +28,7 @@
  */
 # define MAX 64
 
-void read_input(char *line_arr, char **tokens);
+void read_input(char *line_arr, char **token_arr);
 
 /*
  * main()
@@ -45,14 +45,14 @@ void read_input(char *line_arr, char **tokens);
 int main(int argc, char **argv){
     
     char line_arr[MAX]; // maximum input line size
-    char *tokens[MAX];
+    char *token_arr[MAX];
     
     printf("MiniSHELL$ ");
     while (fgets(line_arr, sizeof(line_arr), stdin) != NULL) { // read from stdin into line_arr
     
         printf("MiniSHELL$ ");
         
-        read_input(line_arr, tokens);
+        read_input(line_arr, token_arr);
         
         if (tokens[0] == NULL) {
             continue; // don't bother running the rest if no command
@@ -62,7 +62,7 @@ int main(int argc, char **argv){
         
         if (pid == 0) { // child
         
-            if (execvp(tokens[0], tokens) == -1) {
+            if (execvp(token_arr[0], token_arr) == -1) {
                 perror("execvp failed to open program in main()");
                 exit(1); // error
             }
@@ -91,23 +91,23 @@ int main(int argc, char **argv){
  *
  * Parameters:
  * - char* line_arr: original input line
- * - char** tokens: double ptr to tokenized char array
+ * - char** token_arr: double ptr to array where elements point to strings
  *
  * Return:
  * - modifies tokens
  */
-void read_input(char *line_arr, char **tokens){
+void read_input(char *line_arr, char **token_arr){
 
     int newArgc = 0;
     char *whitespace = " \t\f\r\v\n";
     char *currentToken = strtok(line_arr, whitespace);
     
-    while (currentToken != NULL) { // for length of tokens
-        tokens[newArgc] = strdup(currentToken); // duplicate each token again because strings are just pointers
+    while (currentToken != NULL) { // for length of token_arr
+        token_arr[newArgc] = strdup(currentToken); // duplicate each token again because strings are just pointers
         currentToken = strtok(NULL, whitespace);
         newArgc++;
     }
     
-    tokens[newArgc] = NULL;
+    token_arr[newArgc] = NULL;
 
 }
