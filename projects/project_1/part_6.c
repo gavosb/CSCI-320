@@ -44,7 +44,7 @@ void read_input(char *line_arr, char **tokens);
  */
 int main(int argc, char **argv){
     
-    char line_arr[MAX]; // Maximum input line size
+    char line_arr[MAX]; // maximum input line size
     char *tokens[MAX];
     
     printf("MiniSHELL$ ");
