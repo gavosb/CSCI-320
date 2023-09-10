@@ -21,12 +21,6 @@
 # include <stdlib.h>
 # include <string.h>
 
-/*
- * Definitions
- */
-#define TRUE  1
-#define FALSE 0
-
 int main(int argc, char **argv){
 
     char line_arr[50]; // max size for string/line is 50

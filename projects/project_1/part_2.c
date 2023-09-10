@@ -5,7 +5,6 @@
  * Terminate when the end-of-file is reached without writing anything.
  *
  * gets() and puts() were removed from the C standard and replaced with fgets().
- * Due to the confusion this caused, this code is largely from ChatGPT.
  *
  * Operations:
  * None
@@ -21,11 +20,6 @@
  */
 # include <stdio.h>
 
-/*
- * Definitions
- */
-#define TRUE  1
-#define FALSE 0
 
 int main(int argc, char **argv){
 
