@@ -26,7 +26,7 @@
 /*
  * Definitions
  */
-# define MAX 64
+# define MAX 256
 
 void read_input(char *line_arr, char **token_arr);
 
