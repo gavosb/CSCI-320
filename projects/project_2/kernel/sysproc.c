@@ -69,11 +69,31 @@ sys_sleep(void)
 }
 
 // my added syscall for project 2
+// returns a count of all open file descriptors for a given process
 uint64
 sys_getfilenum(void)
 {
+  int target_pid;
+  argint(0, &target_pid);
 
-  struct proc *p = myproc();
+  struct proc *p;
+  int found = -1;
+  
+  for(p = proc; p < &proc[NPROC]; p++) { // if proc memory address is less than the memory address of the maximum possible proc addr?
+    acquire(&p->lock);
+    if(p->pid == target_pid) {
+      release(&p->lock);
+      found = 0;
+      break;
+    } else {
+      release(&p->lock);
+    }
+  }
+  if (found == -1){
+    return 0; // error, process not found
+ }
+
+  // count open file descriptors for process
   int fd = 0;
   int count = 0;
   while(fd < NOFILE){
