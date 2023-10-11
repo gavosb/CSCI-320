@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "pstat.h"
 
 struct cpu cpus[NCPU];
 
@@ -124,6 +125,8 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  // allocate tickets for lottery scheduling
+  p->tickets = DEFAULT_TICKETS;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -145,6 +148,8 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+  
+  
 
   return p;
 }
@@ -311,6 +316,11 @@ fork(void)
   safestrcpy(np->name, p->name, sizeof(p->name));
 
   pid = np->pid;
+  // set same # of tickets as parent
+  acquire(&p->lock);
+  np->tickets = p->tickets; //refactor this later to use a function
+  release(&p->lock);
+  
 
   release(&np->lock);
 
@@ -446,6 +456,9 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  // should this be static?
+  static int total_tickets = NPROC * DEFAULT_TICKETS; // we may have to recalculate this every time to account for only RUNNABLE processes
+  printf("%d\n", total_tickets);
   
   c->proc = 0;
   for(;;){

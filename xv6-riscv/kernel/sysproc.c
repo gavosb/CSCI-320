@@ -5,6 +5,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "pstat.h"
 
 uint64
 sys_exit(void)
@@ -88,4 +89,68 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+// Added for Project 3
+/*
+ * sys_settickets
+ * This system call assigns tickets to the calling process.
+ * It only takes the number of tickets as a parameter.
+ *
+ */
+uint64
+sys_settickets(void)
+{
+  int number;
+  struct proc *p = myproc();
+  argint(0, &number);
+  acquire(&p->lock);
+  p->tickets = number;
+  release(&p->lock);
+  
+  return 0;
+}
+
+// Added for Project 3
+/*
+ * This function uses a return parameter, so a pstat struct must be 
+ * defined prior to calling.
+ *
+ * This call fills the pstat struct with information of ALL running processes.
+ *
+ */
+uint64
+sys_getpinfo(void)
+{
+  struct pstat *process_info;
+  uint64 process_info_addr;
+  //argaddr(1, &p);
+  struct proc *p;
+  argaddr(0, &process_info_addr);
+  process_info = (struct pstat *) process_info_addr;
+  
+  // argptr (0 , (void*)&process_info ,sizeof(*process_info));
+  if (!process_info){
+    return -1; // NULL pointer
+  }
+  // IMPORTANT: check if not a proc struct
+  // HUGE Potential for misuse?
+
+  // iterate through process list
+  int proc_num = 0;
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    process_info->tickets[proc_num] = p->tickets;
+    process_info->ticks[proc_num] = p->ticks;
+    process_info->pid[proc_num] = p->pid;
+    if (p->state == RUNNING){ // check if UNUSED instead?
+      process_info->inuse[proc_num] = 0;
+    }else{
+      process_info->inuse[proc_num] = 1;
+    }
+    release(&p->lock);
+    proc_num++;
+  }
+  
+  return 0;
 }
