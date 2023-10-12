@@ -172,6 +172,5 @@ sys_scaled_random(void)
   int high;
   argint(0, &low);
   argint(1, &high);
-  scaled_random(low,high);
-  return 0;
+  return scaled_random(low,high);
 }
