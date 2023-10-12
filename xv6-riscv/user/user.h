@@ -25,6 +25,8 @@ int sleep(int);
 int uptime(void);
 int settickets(int);
 int getpinfo(struct pstat *);
+void rand_init(int);
+int scaled_random(int,int);
 
 // ulib.c
 int stat(const char*, struct stat*);

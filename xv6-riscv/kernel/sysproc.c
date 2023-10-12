@@ -6,6 +6,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "pstat.h"
+#include "random.h"
 
 uint64
 sys_exit(void)
@@ -152,5 +153,25 @@ sys_getpinfo(void)
     proc_num++;
   }
   
+  return 0;
+}
+
+uint64
+sys_rand_init(void)
+{
+  int seed;
+  argint(0, &seed);
+  rand_init(seed);
+  return 0;
+}
+
+uint64
+sys_scaled_random(void)
+{
+  int low;
+  int high;
+  argint(0, &low);
+  argint(1, &high);
+  scaled_random(low,high);
   return 0;
 }

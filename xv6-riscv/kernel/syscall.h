@@ -22,3 +22,5 @@
 #define SYS_close  21
 #define SYS_settickets 22
 #define SYS_getpinfo 23
+#define SYS_rand_init 24
+#define SYS_scaled_random 25
