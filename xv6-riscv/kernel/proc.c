@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 #include "pstat.h"
+#include "random.h"
 
 struct cpu cpus[NCPU];
 
@@ -444,6 +445,21 @@ wait(uint64 addr)
   }
 }
 
+// count total tickets from all runnable processes
+int
+get_total_tickets(void){
+  struct proc *p;
+  int total = 0;
+  for(p = proc; p < &proc[NPROC]; p++) {
+      acquire(&p->lock);
+      if(p->state == RUNNABLE) {
+        total += p->tickets;
+      }
+      release(&p->lock);
+  }
+  return total;
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -456,31 +472,39 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  // should this be static?
-  static int total_tickets = NPROC * DEFAULT_TICKETS; // we may have to recalculate this every time to account for only RUNNABLE processes
-  printf("%d\n", total_tickets);
-  
+  int total_tickets;
+  int seed = 20;
+  // init random from seed
+  rand_init(seed);
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
-
-    for(p = proc; p < &proc[NPROC]; p++) {
+    // count total tickets
+    total_tickets = get_total_tickets();
+    // find winning ticket
+    int winning_ticket = scaled_random(1,total_tickets);
+    
+    // go through process list and find process to run
+    int counted_tickets = 0;
+    p = proc;
+    while ((counted_tickets < winning_ticket) || (p < &proc[NPROC])){
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
+        counted_tickets = counted_tickets + p->tickets;
       }
       release(&p->lock);
+      p++;
     }
+    acquire(&p->lock);
+    // Switch to winner process. 
+    p->state = RUNNING;
+    c->proc = p;
+    swtch(&c->context, &p->context);
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+    release(&p->lock);
   }
 }
 
@@ -693,4 +717,35 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+int
+getpinfo(struct pstat *pFromUser){
+  struct pstat process_info; // local to kernel
+  struct proc *p;
+
+  if (!pFromUser){
+    return -1; // NULL pointer
+  }
+
+  // iterate through process list
+  int proc_num = 0;
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    process_info.tickets[proc_num] = p->tickets;
+    process_info.ticks[proc_num] = p->ticks;
+    process_info.pid[proc_num] = p->pid;
+    if (p->state == RUNNING){ // check if UNUSED instead?
+      process_info.inuse[proc_num] = 0;
+    }else{
+      process_info.inuse[proc_num] = 1;
+    }
+    release(&p->lock);
+    proc_num++;
+  }
+
+  // copy to user space
+  either_copyout(1, (uint64) pFromUser, &process_info, sizeof(struct pstat));
+  
+  return 0;
 }

@@ -125,35 +125,9 @@ sys_getpinfo(void)
 {
   struct pstat *process_info;
   uint64 process_info_addr;
-  //argaddr(1, &p);
-  struct proc *p;
   argaddr(0, &process_info_addr);
   process_info = (struct pstat *) process_info_addr;
-  
-  // argptr (0 , (void*)&process_info ,sizeof(*process_info));
-  if (!process_info){
-    return -1; // NULL pointer
-  }
-  // IMPORTANT: check if not a proc struct
-  // HUGE Potential for misuse?
-
-  // iterate through process list
-  int proc_num = 0;
-  for(p = proc; p < &proc[NPROC]; p++){
-    acquire(&p->lock);
-    process_info->tickets[proc_num] = p->tickets;
-    process_info->ticks[proc_num] = p->ticks;
-    process_info->pid[proc_num] = p->pid;
-    if (p->state == RUNNING){ // check if UNUSED instead?
-      process_info->inuse[proc_num] = 0;
-    }else{
-      process_info->inuse[proc_num] = 1;
-    }
-    release(&p->lock);
-    proc_num++;
-  }
-  
-  return 0;
+  return getpinfo(process_info);
 }
 
 uint64
