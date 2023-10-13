@@ -484,27 +484,30 @@ scheduler(void)
     total_tickets = get_total_tickets();
     // find winning ticket
     int winning_ticket = scaled_random(1,total_tickets);
+    //printf("Winning Ticket: %d\n", winning_ticket);
     
-    // go through process list and find process to run
+    // go through process table and find a process to run
     int counted_tickets = 0;
     p = proc;
-    while ((counted_tickets < winning_ticket) || (p < &proc[NPROC])){
+    while (p < &proc[NPROC]){
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
+      if(p->state == RUNNABLE) { // count tickets from all runnable processes
         counted_tickets = counted_tickets + p->tickets;
+      }
+      if (counted_tickets >= winning_ticket){ // run the process
+        // Switch to winner process. 
+        p->state = RUNNING;
+        c->proc = p;
+        swtch(&c->context, &p->context);
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+        release(&p->lock);
+        break;
       }
       release(&p->lock);
       p++;
     }
-    acquire(&p->lock);
-    // Switch to winner process. 
-    p->state = RUNNING;
-    c->proc = p;
-    swtch(&c->context, &p->context);
-    // Process is done running for now.
-    // It should have changed its p->state before coming back.
-    c->proc = 0;
-    release(&p->lock);
   }
 }
 
