@@ -21,32 +21,40 @@
 // or else we won't have accurate data in the process table
 int test_processes(int procnum){
 	int total_tickets = (procnum * (procnum+1))/2; // closed form for ticket count sum
+	total_tickets = total_tickets * 10; // remove if not scaling
+	int total_ticks = 0;
 	int main_process = 0;
-	printf("running %d test processes\n", procnum);
+	printf("Running %d test processes: \n", procnum);
 	for (int i = 0; i < procnum; i++){
 		int pid = fork();
 		if (pid == 0) { // child
-		  settickets(procnum - i); // proc1 gets 3 tickets, 2 gets 2, 3 gets 1 etc
-		  sleep(5);
+		  settickets((procnum - i) * 10); // proc1 gets 3 tickets, 2 gets 2, 3 gets 1 etc
+		  sleep(50);
 		  exit(0);
 		}
 		if ((pid != 0) && i == procnum-1){
-		    printf("main process");
 			main_process = 1;
 		}
 	}
 	
 	if (main_process == 1){
-	    printf("printing out pstat info\n");
+	    sleep(40); // wait some time for the processes to gather time slices
+	    printf("* Printing out pstat info *\n");
+	    printf("TOTAL TICKETS: %d\n", total_tickets);
 		struct pstat pinfo;
         getpinfo(&pinfo);
-        for (int i = 0; i < NPROC; i++){
+        for (int i = procnum; i < NPROC; i++){
           if (pinfo.inuse[i]){
-              printf("--PROCESS (PID): %d--\n", pinfo.pid[i]);
+            total_ticks += pinfo.ticks[i];
+          }
+       }
+        for (int i = procnum; i < NPROC; i++){
+          if (pinfo.inuse[i]){
+              printf("-- PROCESS (PID) %d--\n", pinfo.pid[i]);
 	          printf("ticks: %d\n", pinfo.ticks[i]);
               printf("tickets: %d\n", pinfo.tickets[i]);
-              printf("desired ratio: %d\n", ((pinfo.ticks[i])/pinfo.tickets[i]));
-              printf("actual ratio: %d\n", ((pinfo.ticks[i])/total_tickets));
+              printf("desired ratio: (%d / %d)\n", pinfo.tickets[i], total_tickets);
+              printf("actual ratio: (%d / %d)\n", pinfo.ticks[i], total_ticks);
           }
         }
 	}
@@ -56,6 +64,8 @@ int test_processes(int procnum){
 
 int main() {
 	printf("Running lotteryTest\n");
-	test_processes(3);
+	if (test_processes(3)){
+	  printf("success: three processes");
+	}
     exit(0);
 }

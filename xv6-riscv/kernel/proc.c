@@ -500,6 +500,7 @@ scheduler(void)
         // Switch to winner process. 
         p->state = RUNNING;
         c->proc = p;
+        p->ticks += 1;
         swtch(&c->context, &p->context);
         // Process is done running for now.
         // It should have changed its p->state before coming back.
