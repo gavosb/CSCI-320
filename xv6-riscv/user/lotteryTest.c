@@ -29,7 +29,10 @@ int test_processes(int procnum){
 		int pid = fork();
 		if (pid == 0) { // child
 		  settickets((procnum - i) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
-		  sleep(50);
+		  int looper = 0;
+		  while (looper < (procnum - i) * 3000){
+              looper += 1;
+          }
 		  exit(0);
 		}
 		if ((pid != 0) && i == procnum-1){
