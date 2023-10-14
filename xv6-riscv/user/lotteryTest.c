@@ -23,30 +23,29 @@ int test_processes(int procnum){
 	int total_tickets = (procnum * (procnum+1))/2; // closed form for ticket count sum
 	total_tickets = total_tickets * 10; // remove if not scaling
 	int total_ticks = 0;
-	int main_process = 0;
+	int pid = -1;
 	printf("Running %d test processes: \n", procnum);
-	for (int i = 0; i < procnum; i++){
-		int pid = fork();
-		if (pid == 0) { // child
-		  // NOTE: this doesnt work because each child process is running sequentially in this loop.
-		  settickets((procnum - i) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
-		  int looper = 0;
-		  while (looper < (procnum - i) * 3000){
-              looper += 1;
-          }
-		  exit(0);
-		}
-		if ((pid != 0) && i == procnum-1){
-			main_process = 1;
-		}
+	int i = 0;
+	while (i < procnum){
+		pid = fork();
+		i++;
+	}
+	if (pid == 0) { // child
+	  settickets((procnum - i) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
+	  int looper = 0;
+	  while (looper < (procnum - i) * 300){
+          looper += 1;
+      }
+	  exit(0);
 	}
 	
-	if (main_process == 1){
-	    sleep(40); // wait some time for the processes to gather time slices
+	if ((pid != 0) && (i == procnum)){
+	    sleep(5); // wait some time for the processes to gather time slices
 	    printf("* Printing out pstat info *\n");
 	    printf("TOTAL TICKETS: %d\n", total_tickets);
 		struct pstat pinfo;
         getpinfo(&pinfo);
+        // possible concurrency issue
         for (int i = procnum; i < NPROC; i++){
           if (pinfo.inuse[i]){
             total_ticks += pinfo.ticks[i];
