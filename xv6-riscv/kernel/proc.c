@@ -724,6 +724,7 @@ procdump(void)
   }
 }
 
+// process_info is a struct that contains parallel arrays with info for each process in its respective index
 int
 getpinfo(struct pstat *pFromUser){
   struct pstat process_info; // local to kernel
@@ -740,11 +741,7 @@ getpinfo(struct pstat *pFromUser){
     process_info.tickets[proc_num] = p->tickets;
     process_info.ticks[proc_num] = p->ticks;
     process_info.pid[proc_num] = p->pid;
-    if (p->state == RUNNING){ // check if UNUSED instead?
-      process_info.inuse[proc_num] = 0;
-    }else{
-      process_info.inuse[proc_num] = 1;
-    }
+    process_info.inuse[proc_num] = (p->state != UNUSED);
     release(&p->lock);
     proc_num++;
   }

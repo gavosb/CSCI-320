@@ -14,21 +14,17 @@
 
 #include "kernel/types.h"
 #include "user/user.h"
-#include "kernel/random.h"
 #include "kernel/pstat.h"
 
 int main() {
-	struct pstat pinfo_arr[NPROC];
-    struct pstat *pinfo; //malloc an empty pstat?
-    getpinfo(pinfo_arr);
-    pinfo = pinfo_arr;
-    printf("%d\n", &pinfo);
-    /*
-	for (pinfo = pinfo_arr; pinfo < &pinfo_arr[NPROC]; pinfo++){ // any way to do this procnum rather than NPROC?
-		printf("--PROCESS: %d--", pinfo->pid);
-		printf("ticks: %d\n", pinfo->ticks);
-		printf("tickets: %d\n", pinfo->tickets);
-	}
-    */
+	struct pstat pinfo;
+    getpinfo(&pinfo);
+    for (int i = 0; i < NPROC; i++){
+      if (pinfo.inuse[i]){
+          printf("--PROCESS (PID): %d--\n", pinfo.pid[i]);
+	      printf("ticks: %d\n", pinfo.ticks[i]);
+          printf("tickets: %d\n", pinfo.tickets[i]);
+      }
+    }
     exit(0);
 }
