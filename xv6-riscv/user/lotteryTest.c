@@ -26,31 +26,33 @@ int test_processes(int procnum){
 	int pid = -1;
 	printf("Running %d test processes: \n", procnum);
 	int i = 0;
-	while (i < procnum){
+	while (i < procnum && pid != 0){
 		pid = fork();
 		i++;
 	}
 	if (pid == 0) { // child
-	  settickets((procnum - i) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
+	  settickets(((procnum - i) + 1) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
 	  int looper = 0;
-	  while (looper < (procnum - i) * 300){
+	  while (looper < (procnum - i) * 500){ // might want to adjust this
           looper += 1;
       }
 	  exit(0);
 	}
 	
 	if ((pid != 0) && (i == procnum)){
-	    sleep(5); // wait some time for the processes to gather time slices
+	    sleep(20); // wait some time for the processes to gather time slices
 	    printf("* Printing out pstat info *\n");
 	    printf("TOTAL TICKETS: %d\n", total_tickets);
 		struct pstat pinfo;
         getpinfo(&pinfo);
         // possible concurrency issue
+        // get total time slices spent on processes
         for (int i = procnum; i < NPROC; i++){
           if (pinfo.inuse[i]){
             total_ticks += pinfo.ticks[i];
           }
         }
+        // print process info
         for (int i = procnum; i < NPROC; i++){
           if (pinfo.inuse[i]){
               printf("-- PROCESS (PID) %d--\n", pinfo.pid[i]);
