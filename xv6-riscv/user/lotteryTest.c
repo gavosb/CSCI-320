@@ -28,7 +28,7 @@ int test_processes(int procnum){
 	for (int i = 0; i < procnum; i++){
 		int pid = fork();
 		if (pid == 0) { // child
-		  settickets((procnum - i) * 10); // proc1 gets 3 tickets, 2 gets 2, 3 gets 1 etc
+		  settickets((procnum - i) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
 		  sleep(50);
 		  exit(0);
 		}
@@ -47,7 +47,7 @@ int test_processes(int procnum){
           if (pinfo.inuse[i]){
             total_ticks += pinfo.ticks[i];
           }
-       }
+        }
         for (int i = procnum; i < NPROC; i++){
           if (pinfo.inuse[i]){
               printf("-- PROCESS (PID) %d--\n", pinfo.pid[i]);
