@@ -28,6 +28,7 @@ int test_processes(int procnum){
 	for (int i = 0; i < procnum; i++){
 		int pid = fork();
 		if (pid == 0) { // child
+		  // NOTE: this doesnt work because each child process is running sequentially in this loop.
 		  settickets((procnum - i) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
 		  int looper = 0;
 		  while (looper < (procnum - i) * 3000){
