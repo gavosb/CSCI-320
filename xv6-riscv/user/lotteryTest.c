@@ -51,7 +51,7 @@ void print_pinfo(int procnum){
     }
     
     // print process info
-    for (int i = 0; i < NPROC; i++){
+    for (int i = procnum; i < NPROC; i++){
       if (pinfo.inuse[i]){
           printf("-- PROCESS (PID) %d--\n", pinfo.pid[i]);
           printf("ticks: %d\n", pinfo.ticks[i]);
@@ -83,17 +83,27 @@ int test_processes(int procnum){
 		if (pid == 0){
 		  settickets(((procnum - i)) * 10); // proc1 gets 30 tickets, 2 gets 20, 3 gets 10 etc
 		  int looper = 0;
+		  
 	      // loop every child process 1mil times
 	      while (looper < 1000000){
               looper += 1;
+              double calculation = 0.0; // spin CPU cycles
+              for (int k = 0; k < 50000; k++){
+                calculation = calculation * calculation / 2 + 2;
+              }
+              
               // every 100k loops print out pinfo
               // i = procnun; lowest ticket process. i.e., least frequently scheduled
               // note: this only gives us the pinfo from the process list of the current child, we need it from parent
-              if (i == procnum-1 && looper % 100000 == 0){
+              if (i == procnum-1 && looper % 100000 == 0){ 
+               ///*
                 printf("\n*\n*\n*\n*\n*\n");
                 printf("Printing out pstat info: %d\n", looper % 11111);
                 print_pinfo(procnum);
+               //*/
+                //continue;
               }
+              
 		    }
 		}
 		i++;
