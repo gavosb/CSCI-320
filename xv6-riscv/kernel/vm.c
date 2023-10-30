@@ -437,3 +437,29 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+/*
+ * vmprint()
+ * Prints relevant information for a page table
+ *
+ * Parameters:
+ * - pagetable_t pt: pagetable to be printed
+ *
+ */
+void
+vmprint(pagetable_t pt, int depth)
+{
+  // there are 2^9 = 512 PTEs in a page table.
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0){ // if present && if readable, writable, or executable
+      // this PTE points to a lower-level page table.
+      uint64 child = PTE2PA(pte);
+      vmprint((pagetable_t)child, depth + 1);
+    } else if(pte & PTE_V){
+      panic("vmprint: leaf");
+    }
+  }
+   PXMASK 
+  printf("pte stuff");
+}
