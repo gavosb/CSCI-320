@@ -453,18 +453,22 @@ vmprint(pagetable_t pt, int depth)
   pte_t pte;
   for(int i = 0; i < 512; i++){
     pte = pt[i];
-    if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0){ // if present && if readable, writable, or executable
-      // this PTE points to a lower-level page table.
-      uint64 child = PTE2PA(pte);
-      vmprint((pagetable_t)child, depth + 1);
-    } else if(pte & PTE_V){
-      panic("vmprint: leaf");
+    
+    if(pte & PTE_V){
+        for (int j = 0; j < depth; j++) { // print for appropriate table level
+          printf(".. ");
+        }
+        uint64 child = PTE2PA(pte);
+        printf("%d: pte %p pa %p... \n", i, pte, child);
+        if((pte & (PTE_R|PTE_W|PTE_X)) == 0){ // if present && a ptr to another page table
+          vmprint((pagetable_t)child, depth + 1);
+        }
     }
   }
-   printf("\n");
-   for (int i = 0; i < depth; i++) {
-     printf(".. ");
-   }
-   printf(" %d\n", (pte & PXMASK));
+   //printf("\n");
+   //for (int i = 0; i < depth; i++) {
+   //  printf(".. ");
+   //}
+   //printf(" %d %d\n", (pte & PXMASK), PTE2PA(pte));
   //printf("pte stuff");
 }
