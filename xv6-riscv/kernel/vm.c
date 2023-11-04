@@ -465,10 +465,42 @@ vmprint(pagetable_t pt, int depth)
         }
     }
   }
-   //printf("\n");
-   //for (int i = 0; i < depth; i++) {
-   //  printf(".. ");
-   //}
-   //printf(" %d %d\n", (pte & PXMASK), PTE2PA(pte));
-  //printf("pte stuff");
+}
+
+int
+pgaccess(uint64 v_addr_u, int num_pages_u, uint64 buffer_addr_u)
+{
+  if (num_pages_u > 32) {
+	 return -1; // over max buffer size
+  }
+  // kernel space
+  int buffer; // should this be an int?
+  pte_t start_table;
+  
+  // walk to v_addr pte and then start looping through, using bitwise OR to set bit at each i
+  // return this to the addr at buffer_addr
+  
+  start_table = walk(pagetable_t pagetable, v_addr_u, 0);
+  
+  // check num_pages starting at v_addr
+  pte_t pte;
+  for(int i = 0; i < 512; i++){
+    pte = start_table[i];
+	if(pte & PTE_A){
+		
+		//clear pte_A means clear the bit in the pte?
+		pte = pte | PTE_A; // how is this changing the pte itself?
+	}
+  }
+  
+  // save results into bitmask
+  
+  // copy to user space
+  // this means that these are return parameters
+  either_copyout(1, v_addr_u, &v_addr, sizeof(uint64));
+  either_copyout(1, num_pages_u, &num_pages, sizeof(int));
+  either_copyout(1, buffer_addr_u, &buffer_addr, sizeof(uint64));
+  
+  
+  return 0;
 }
