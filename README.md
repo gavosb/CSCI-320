@@ -9,16 +9,21 @@ Files Modified:
 
 kernel/defs.h
 - defined pgaccess
+
 kernel/riscv.h
 - defined PTE_A
+  
 kernel/vm.c
 - implemented vmprint()
 - implemented pgaccess(), returns buffer to user space
+  
 kernel/sysproc.c
 - defined pgaccess syscall
+  
 user/user.h
 user/usys.pl
 - connected syscall to user space
 
 Output:
+
 ![output](https://github.com/gavosb/CSCI-320/assets/75707967/e86eb82b-0674-409c-b58f-2c5ddd199f34)
