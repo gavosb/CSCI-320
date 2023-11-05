@@ -7,6 +7,9 @@ This project defined a kernel function vmprint() and a syscall, pgaccess.
 
 Files Modified:
 
+Makefile
+- referenced user/pgaccessTest.c
+
 kernel/defs.h
 - defined pgaccess
 
@@ -23,6 +26,9 @@ kernel/sysproc.c
 user/user.h
 user/usys.pl
 - connected syscall to user space
+
+user/pgAccessTest.c
+- added
 
 Output:
 
