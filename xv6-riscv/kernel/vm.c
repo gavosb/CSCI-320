@@ -455,6 +455,7 @@ vmprint(pagetable_t pt, int depth)
 {
   // there are 2^9 = 512 PTEs in a page table.
   pte_t pte;
+  
   for(int i = 0; i < 512; i++){
     pte = pt[i];
     
@@ -462,8 +463,10 @@ vmprint(pagetable_t pt, int depth)
         for (int j = 0; j < depth; j++) { // print for appropriate table level
           printf(".. ");
         }
+        
         uint64 child = PTE2PA(pte);
         printf("%d: pte %p pa %p... \n", i, pte, child);
+
         if((pte & (PTE_R|PTE_W|PTE_X)) == 0){ // if present && a ptr to another page table
           vmprint((pagetable_t)child, depth + 1);
         }
@@ -471,6 +474,21 @@ vmprint(pagetable_t pt, int depth)
   }
 }
 
+/*
+ * pgaccess()
+ *
+ * Traverses current process' page table starting from a given virtual address, and checks adjacent PTEs' access bit.
+ * Results stored in bitmask, which is the return parameter buffer_addr_u
+ *
+ * Parameters:
+ * - char* v_addr: starting virtual address
+ * - int num_pages: number of pages to check, assumed to be sizeof(int)
+ * - int* buffer_addr_u: return parameter; bitmask of accessed pages in order, starting from v_addr
+ *
+ * Return:
+ * 0: Success
+ * -1: Error, over buffer size
+ */
 int
 pgaccess(char* v_addr, int num_pages, int* buffer_addr_u)
 {
