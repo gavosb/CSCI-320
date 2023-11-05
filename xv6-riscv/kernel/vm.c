@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -14,6 +16,8 @@ pagetable_t kernel_pagetable;
 extern char etext[];  // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
+
+extern
 
 // Make a direct-map page table for the kernel.
 pagetable_t
@@ -468,39 +472,37 @@ vmprint(pagetable_t pt, int depth)
 }
 
 int
-pgaccess(uint64 v_addr_u, int num_pages_u, uint64 buffer_addr_u)
+pgaccess(char* v_addr, int num_pages, int* buffer_addr_u)
 {
-  if (num_pages_u > 32) {
+
+  int pages_scaled = num_pages * 8; // actual number of pages
+  int buffer = 0; // kernel space bitmask
+  struct proc *p= myproc();
+  char *addr = v_addr;
+  
+  if (num_pages > sizeof(int) * 8) { // 32 bits in an integer
+  
 	 return -1; // over max buffer size
-  }
-  // kernel space
-  int buffer; // should this be an int?
-  pte_t start_table;
-  
-  // walk to v_addr pte and then start looping through, using bitwise OR to set bit at each i
-  // return this to the addr at buffer_addr
-  
-  start_table = walk(pagetable_t pagetable, v_addr_u, 0);
-  
-  // check num_pages starting at v_addr
-  pte_t pte;
-  for(int i = 0; i < 512; i++){
-    pte = start_table[i];
-	if(pte & PTE_A){
-		
-		//clear pte_A means clear the bit in the pte?
-		pte = pte | PTE_A; // how is this changing the pte itself?
-	}
+	 
   }
   
-  // save results into bitmask
+  for (int i = 0; i < pages_scaled; ++i){
+  
+    pte_t *pte = walk(p->pagetable, (uint64)addr, 0);
+    
+    if((*pte & PTE_A) && (pte != 0)){
+    
+      buffer = buffer | (1<<i); // set buffer accessed for this page;
+      *pte = *pte ^ PTE_A; // unset pte accessed bit
+      
+    }
+    
+    addr += PGSIZE;
+    
+  }
   
   // copy to user space
-  // this means that these are return parameters
-  either_copyout(1, v_addr_u, &v_addr, sizeof(uint64));
-  either_copyout(1, num_pages_u, &num_pages, sizeof(int));
-  either_copyout(1, buffer_addr_u, &buffer_addr, sizeof(uint64));
-  
-  
+  either_copyout(1, (uint64)buffer_addr_u, &buffer, sizeof(int));
   return 0;
+  
 }

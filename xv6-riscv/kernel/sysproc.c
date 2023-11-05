@@ -101,5 +101,5 @@ sys_pgaccess(void)
 	argint(1, &num_pages);
 	argaddr(2, &buffer_addr);
 	
-	return pgaccess(v_addr, num_pages, buffer_addr);
+	return pgaccess((char*) v_addr, num_pages, (int*) buffer_addr);
 }
