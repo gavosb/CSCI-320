@@ -22,25 +22,18 @@ int right(int p) {
 }
 
 void get_forks(int p) {
-  Zem_t *rightFork = &forks[right(p)];
-  Zem_t *leftFork = &forks[left(p)];
+  if (p == n-1) {
   
-  Mutex_lock(&rightFork->lock);
-  if (rightFork->value > 0){
-	  // can try leftFork now
-	  Mutex_lock(&leftFork->lock);
-	  if (leftFork->value > 0){
-		  Zem_wait(&forks[left(p)]);
-		  Zem_wait(&forks[right(p)]);
-		  printf("\n both forks acquired: %d\n", p);
-	  } else {
-		  printf("\n could NOT acquire forks: %d\n", p);
-	  }
+    Zem_wait(&forks[right(p)]);
+    Zem_wait(&forks[left(p)]);
+    
+  } else {
+  
+    Zem_wait(&forks[left(p)]);
+    Zem_wait(&forks[right(p)]);
+    
   }
-  
-  Mutex_unlock(&rightFork->lock);
-  Mutex_unlock(&leftFork->lock);
-  
+  printf("\n both forks acquired: %d\n", p);
   
 }
 
@@ -57,27 +50,9 @@ void *philosopher(void *arg) {
     
     while (1) {
         sleep(.02); // think
-		//only get forks if both forks available
-		// we have to just mutex both forks
-		Zem_t *rightFork = &forks[right(sp)];
-		Zem_t *leftFork = &forks[left(p)];
-		int forksAcquired = 0;
-		Mutex_lock(&rightFork->lock);
-		if (rightFork->value > 0){
-			// can try leftFork now
-			Mutex_lock(&leftFork->lock);
-			if (leftFork->value > 0){
-				printf("\n both forks acquired: %d\n", p);
-				forksAcquired = 1;
-				sleep(.02); // eat
-			} else {
-				printf("\n could NOT acquire forks: %d\n", p);
-			}
-			Mutex_unlock(&rightFork->lock);
-			Mutex_unlock(&leftFork->lock);
-		}else{
-			Mutex_unlock(&rightFork->lock);
-		}
+        get_forks(p);
+        sleep(.02); // eat
+        put_forks(p);
     }
     
     return NULL;

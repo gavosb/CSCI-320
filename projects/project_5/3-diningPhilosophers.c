@@ -7,7 +7,9 @@
 #include "zemaphore.h"
 
 Zem_t *forks;
+Zem_t table;
 int n; // number of philosophers
+
 
 int left(int p) {
 
@@ -22,26 +24,8 @@ int right(int p) {
 }
 
 void get_forks(int p) {
-  Zem_t *rightFork = &forks[right(p)];
-  Zem_t *leftFork = &forks[left(p)];
-  
-  Mutex_lock(&rightFork->lock);
-  if (rightFork->value > 0){
-	  // can try leftFork now
-	  Mutex_lock(&leftFork->lock);
-	  if (leftFork->value > 0){
-		  Zem_wait(&forks[left(p)]);
-		  Zem_wait(&forks[right(p)]);
-		  printf("\n both forks acquired: %d\n", p);
-	  } else {
-		  printf("\n could NOT acquire forks: %d\n", p);
-	  }
-  }
-  
-  Mutex_unlock(&rightFork->lock);
-  Mutex_unlock(&leftFork->lock);
-  
-  
+  Zem_wait(&forks[right(p)]);
+  Zem_wait(&forks[left(p)]);
 }
 
 void put_forks(int p) {
@@ -56,28 +40,12 @@ void *philosopher(void *arg) {
     printf("\n philosopher initialized \n");
     
     while (1) {
-        sleep(.02); // think
-		//only get forks if both forks available
-		// we have to just mutex both forks
-		Zem_t *rightFork = &forks[right(sp)];
-		Zem_t *leftFork = &forks[left(p)];
-		int forksAcquired = 0;
-		Mutex_lock(&rightFork->lock);
-		if (rightFork->value > 0){
-			// can try leftFork now
-			Mutex_lock(&leftFork->lock);
-			if (leftFork->value > 0){
-				printf("\n both forks acquired: %d\n", p);
-				forksAcquired = 1;
-				sleep(.02); // eat
-			} else {
-				printf("\n could NOT acquire forks: %d\n", p);
-			}
-			Mutex_unlock(&rightFork->lock);
-			Mutex_unlock(&leftFork->lock);
-		}else{
-			Mutex_unlock(&rightFork->lock);
-		}
+        Zem_wait(&table); //wait on table
+		get_forks(p);
+		sleep(1); // eat
+		put_forks(p);
+		Zem_post(&table);// post on table
+		sleep(1); // think
     }
     
     return NULL;
@@ -90,6 +58,7 @@ int main(int argc, char *argv[]) {
     n = atoi(argv[1]);
     
     forks = (Zem_t *)malloc(n * sizeof(Zem_t));
+	Zem_init(&table, n-1);
     printf("\n Dining Philosophers Problem \n");
     for (int i = 0; i < n; ++i){
       Zem_init(&forks[i], 1);
