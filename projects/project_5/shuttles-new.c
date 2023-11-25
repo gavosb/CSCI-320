@@ -26,7 +26,10 @@ int shuttle_capacity = 30;
  *
  */
 void *attendee(void *arg) {
-    
+
+    long long int value = (long long int) arg;
+    int id = (int) value;
+
     while (1) {
         
        /* wait at A */
@@ -37,14 +40,12 @@ void *attendee(void *arg) {
 		
         Zem_wait(&shuttle); // begin boarding
         Zem_wait(&passengers_mutex);
-        Zem_wait(&waiting_mutex_A);
-        passengers++;
-        waiting_at_A--;
+        //passengers++;
         if (passengers == shuttle_capacity) { // if last passenger, tell shuttle to leave
             Zem_post(&start_shuttle);
+            printf("\n %d telling shuttle to leave\n", id);
         }
         Zem_post(&passengers_mutex);
-        Zem_post(&waiting_mutex_A);
         Zem_wait(&arrived_B); // wait to arrive at B
         
         /* wait at B */
@@ -54,16 +55,13 @@ void *attendee(void *arg) {
 		Zem_wait(&bus_stop_B);
 
         Zem_post(&shuttle); // begin boarding
-        Zem_wait(&waiting_mutex_A);
         Zem_wait(&passengers_mutex);
-        passengers++;
-        waiting_at_A--;
+        //passengers++;
         if (passengers == shuttle_capacity) { // if last passenger, tell shuttle to leave
             // technically this is unnecessary, but we dont want to post more than once to this
             Zem_post(&start_shuttle);
         }
         Zem_post(&passengers_mutex);
-        Zem_post(&waiting_mutex_A);
         Zem_wait(&arrived_A); // wait to arrive at A
         
     }
@@ -73,17 +71,26 @@ void *attendee(void *arg) {
 }
 
 void *shuttle_driver(void *arg) {
-    long long int capacity_long = (long long int) arg;
-    int capacity = (int) capacity_long;
     
     while (1) {
-
+        Zem_wait(&waiting_mutex_A);
+        Zem_wait(&waiting_mutex_B);
+        Zem_wait(&passengers_mutex);
+        printf("\n beginning loop... \n ");
+        printf("\npassengers: %d, waitingA: %d, waitingB: %d\n", passengers, waiting_at_A, waiting_at_B);
+        printf("\n...\n");
+        Zem_post(&waiting_mutex_A);
+        Zem_post(&waiting_mutex_B);
+        Zem_post(&passengers_mutex);
+        
         /* handle bus stop A */
         Zem_wait(&waiting_mutex_A);
         Zem_wait(&passengers_mutex);
         if (waiting_at_A != 0){ // pick up passengers at A
-            while (waiting_at_A != 0 && passengers < capacity) {
+            while (waiting_at_A != 0 && passengers < shuttle_capacity) {
                 Zem_post(&bus_stop_A); // wake up passengers
+                waiting_at_A--;
+                passengers++;
             }
         } else {
             Zem_post(&start_shuttle); // just leave
@@ -115,8 +122,10 @@ void *shuttle_driver(void *arg) {
         Zem_wait(&waiting_mutex_B);
         Zem_wait(&passengers_mutex);
         if (waiting_at_B != 0){ // pick up passengers at A
-            while (waiting_at_B != 0 && passengers < capacity) {
+            while (waiting_at_B != 0 && passengers < shuttle_capacity) {
                 Zem_post(&bus_stop_B); // wake up passengers
+                waiting_at_B--;
+                passengers++;
             }
         } else {
             Zem_post(&start_shuttle); // just leave
@@ -169,12 +178,12 @@ int main(int argc, char *argv[]) {
     
     // spawn attendees & shuttle driver
     pthread_t c;
-    long long int capacity = (long long int) shuttle_capacity;
-    pthread_create(&c, NULL, shuttle_driver, (void *)capacity);
+    long long int me = (long long int) -1;
+    pthread_create(&c, NULL, shuttle_driver, (void *) me);
     for (int i = 0; i < total_attendees; ++i)
     {
         pthread_t c;
-        long long int me = (long long int) me;
+        long long int me = (long long int) i;
         pthread_create(&c, NULL, attendee, (void *)me);
     }
     
