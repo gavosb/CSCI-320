@@ -42,7 +42,7 @@ void *attendee(void *arg) {
         Zem_post(&waiting_mutex_A);
 		Zem_wait(&bus_stop_A);
 		
-        Zem_wait(&shuttle); // begin boarding
+        //Zem_wait(&shuttle); // begin boarding
         Zem_wait(&passengers_mutex);
         Zem_wait(&door_mutex);
         Zem_wait(&waiting_mutex_A);
@@ -65,7 +65,7 @@ void *attendee(void *arg) {
         Zem_post(&waiting_mutex_B);
 		Zem_wait(&bus_stop_B);
 
-        Zem_post(&shuttle); // begin boarding
+        //Zem_post(&shuttle); // begin boarding
         Zem_wait(&passengers_mutex);
         Zem_wait(&door_mutex);
         Zem_wait(&waiting_mutex_B);
