@@ -25,20 +25,27 @@
 #include "common_threads.h"
 #include "zemaphore.h"
 
-Zem_t start_shuttle;
-Zem_t waiting_mutex_A;
-Zem_t waiting_mutex_B;
-Zem_t passengers_mutex;
-Zem_t door_mutex;
-Zem_t bus_stop_A;
-Zem_t bus_stop_B;
+// shuttle
 Zem_t arrived_A;
 Zem_t arrived_B;
+Zem_t start_shuttle;
+Zem_t door_mutex;
+int door = 0; // 0 = open, 1 = closed
+
+// bus stop A
+Zem_t bus_stop_A;
+Zem_t waiting_mutex_A;
 int waiting_at_A = 0;
+
+// bus stop B
+Zem_t bus_stop_B;
+Zem_t waiting_mutex_B;
 int waiting_at_B = 0;
+
+// auxiliaries
+Zem_t passengers_mutex;
 int passengers = 0;
 int shuttle_capacity = 30;
-int door = 0; // 0 = open, 1 = closed
 int total_attendees = 100;
 
 /*
@@ -60,6 +67,8 @@ void *attendee(void *arg) {
         Zem_post(&waiting_mutex_A);
 		Zem_wait(&bus_stop_A);
 		
+		// passengers needed to track who has entered shuttle
+		// waiting counter needed to check if shuttle ought to pass by stop or not
         Zem_wait(&passengers_mutex);
         Zem_wait(&door_mutex);
         Zem_wait(&waiting_mutex_A);
@@ -82,8 +91,7 @@ void *attendee(void *arg) {
         Zem_wait(&passengers_mutex);
         Zem_wait(&door_mutex);
         Zem_wait(&waiting_mutex_B);
-        //passengers++;
-        if ((waiting_at_A == 0 || passengers == shuttle_capacity) && door == 0) { // if last passenger, tell shuttle to leave
+        if ((waiting_at_B == 0 || passengers == shuttle_capacity) && door == 0) { // if last passenger, tell shuttle to leave
             // technically this is unnecessary, but we dont want to post more than once to this
             door = 1;            
             Zem_post(&start_shuttle);
@@ -99,9 +107,16 @@ void *attendee(void *arg) {
     
 }
 
+/*
+ * The shuttle will go to stop A, and if there are people waiting, wait there until signaled to leave.
+ * The shuttle will then go to stop B, doing the same, and leaving for A. This process repeats indefinitely.
+ *
+ */
 void *shuttle_driver(void *arg) {
     
     while (1) {
+    
+        /* debugging */
         Zem_wait(&waiting_mutex_A);
         Zem_wait(&waiting_mutex_B);
         Zem_wait(&passengers_mutex);
@@ -111,10 +126,11 @@ void *shuttle_driver(void *arg) {
         Zem_post(&waiting_mutex_A);
         Zem_post(&waiting_mutex_B);
         Zem_post(&passengers_mutex);
+        /* debugging */
         
         /* handle bus stop A */
         Zem_wait(&door_mutex);
-        door = 0;
+        door = 0; // opens door, which will 
         Zem_post(&door_mutex);
         Zem_wait(&waiting_mutex_A);
         Zem_wait(&waiting_mutex_B); // causing it to just pick everyone up from B, then everyone from A, etc.
@@ -193,7 +209,12 @@ void *shuttle_driver(void *arg) {
     return NULL;
 }
 
-
+/*
+ * Driver for Shuttle Problem
+ * Initializes attendees as threads, and initializes the shuttle thread.
+ * Waits indefinitely.
+ *
+ */
 int main(int argc, char *argv[]) {
 
     printf("\n Shuttle Problem \n");
@@ -225,7 +246,7 @@ int main(int argc, char *argv[]) {
         pthread_create(&c, NULL, attendee, (void *)me);
     }
     
-    while (1) {
+    while (1) { // not worth the time to set up thread joining honestly
         sleep(1000);
     }
 
