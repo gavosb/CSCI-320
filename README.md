@@ -7,7 +7,7 @@ A collection of assignments to become aquainted with linux utilities.
 
 **Project 2**
 
-Similar to project 1, but for aquainting one's self with xv6.
+Similar to project 1, but for acquainting oneself with xv6.
 
 **Project 3**
 
